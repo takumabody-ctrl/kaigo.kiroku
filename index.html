@@ -2,125 +2,157 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zero-Touch Care Log System</title>
+    <title>CareLog Pro - 高精度介護記録生成ツール</title>
     <style>
-        :root {
-            --primary: #2563eb; --bg: #f8fafc; --card: #ffffff;
-            --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
-        }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--card); border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 100; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
-        .card { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #cbd5e1; }
-        .card.completed { border-left-color: var(--success); opacity: 0.8; }
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
-        button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-normal { background: #e2e8f0; color: #475569; }
-        .btn-abnormal { background: var(--warning); color: white; }
-        .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
-        .log-preview { background: #f1f5f9; padding: 8px; border-radius: 4px; font-size: 0.85rem; margin-top: 10px; min-height: 3em; color: #334155; }
-        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: #ddd; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --text: #1e293b; --accent: #059669; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        h1 { border-left: 5px solid var(--primary); padding-left: 15px; font-size: 1.5rem; margin-bottom: 25px; }
+        
+        .config-section { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; background: #f8fafc; padding: 15px; border-radius: 8px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-weight: bold; font-size: 0.85rem; margin-bottom: 5px; }
+        input, select, textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
+
+        .editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .editor-grid { grid-template-columns: 1fr; } }
+
+        .template-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .tag { background: #e2e8f0; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; border: 1px solid transparent; }
+        .tag:hover { background: var(--primary); color: white; }
+
+        .input-area { width: 100%; height: 150px; border: 2px solid var(--primary); }
+        .output-area { width: 100%; height: 250px; background: #fdfdfd; border: 1px solid #ddd; font-family: monospace; font-size: 0.95rem; }
+        
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-generate { background: var(--primary); }
+        .btn-copy { background: var(--accent); }
+        .btn-clear { background: #64748b; }
+        
+        .pro-tip { margin-top: 20px; font-size: 0.8rem; color: #64748b; background: #eff6ff; padding: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>介護記録 (30名モード)</h2>
-    <div>
-        <button onclick="exportAll()" style="background:var(--success); color:white;">一括出力 (CSV)</button>
+<div class="container">
+    <h1>CareLog Pro: 業務効率化エディタ</h1>
+
+    <div class="config-section">
+        <div class="field">
+            <label>記録日</label>
+            <input type="date" id="targetDate">
+        </div>
+        <div class="field">
+            <label>シーン選択</label>
+            <select id="sceneSelect" onchange="loadTemplates()">
+                <option value="meal">食事・水分</option>
+                <option value="excretion">排泄ケア</option>
+                <option value="accident">体調急変・事故</option>
+                <option value="general">一般生活</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>利用者名</label>
+            <input type="text" id="userName" placeholder="例：田中 様">
+        </div>
+    </div>
+
+    <label>単語ストック（クリックで入力に追加）</label>
+    <div id="wordBank" class="template-bank"></div>
+
+    <div class="editor-grid">
+        <div>
+            <label>音声入力またはメモ（箇条書きでOK）</label>
+            <textarea id="rawInput" class="input-area" placeholder="例：12:15 昼食。お魚おいしいと笑顔。全量摂取。薬もスムーズ。"></textarea>
+            <div class="pro-tip">※スマホの場合はキーボードの音声入力ボタンを押して話してください。</div>
+        </div>
+
+        <div>
+            <label>生成された専門的記録（5W1H/客観形式）</label>
+            <textarea id="outputLog" class="output-area" readonly></textarea>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-generate" onclick="processLog()">記録を専門文章に整形 ⚡</button>
+        <button class="btn btn-copy" onclick="copyLog()">結果をコピー</button>
+        <button class="btn btn-clear" onclick="clearAll()">リセット</button>
     </div>
 </div>
 
-<div id="app" class="grid"></div>
-
 <script>
-// --- Domain Logic & Templates ---
-const USERS = Array.from({length: 30}, (_, i) => ({ id: i+1, name: `利用者 ${String(i+1).padStart(2, '0')} 様` }));
+    // 1. データストック（画像の内容に基づく単語・表現）
+    const STOCKS = {
+        meal: ["全量摂取", "むせ込みなし", "自力摂取", "見守りにて完食", "「おいしい」と笑顔あり", "副食残される", "水分150ml摂取", "服薬確認済み"],
+        excretion: ["トイレ誘導", "排尿あり", "普通便あり", "皮膚トラブルなし", "ご自身で後始末", "リハパン交換", "失禁なし", "腹部膨満感なし"],
+        accident: ["キリキリと痛む", "転倒発見", "意識清明", "バイタル異常なし", "看護師報告済み", "「大丈夫」との訴え", "打撲痕なし"],
+        general: ["穏やかに過ごされる", "他利用者と談笑", "意欲的に参加", "中途覚醒なし", "バイタル測定", "特変なし"]
+    };
 
-const TEMPLATES = {
-    meal: {
-        normal: (t) => `${t}、食堂にて昼食摂取。摂取量10割。むせ込み等の異常なし。`,
-        abnormal: (t, note) => `${t}、食事中に${note}。見守りにて対応。`
-    },
-    excretion: {
-        normal: (t) => `${t}、トイレにて排泄あり。便失禁なし、皮膚状態良好。`,
-        abnormal: (t, note) => `${t}、排泄時${note}を確認。清拭にて対応。`
+    // 初期化
+    document.getElementById('targetDate').valueAsDate = new Date();
+    loadTemplates();
+
+    function loadTemplates() {
+        const scene = document.getElementById('sceneSelect').value;
+        const bank = document.getElementById('wordBank');
+        bank.innerHTML = STOCKS[scene].map(word => 
+            `<span class="tag" onclick="addWord('${word}')">${word}</span>`
+        ).join('');
     }
-};
 
-// --- State Management (Stateless Architecture) ---
-let careState = JSON.parse(localStorage.getItem('care_logs') || '{}');
-
-function render() {
-    const app = document.getElementById('app');
-    app.innerHTML = USERS.map(user => {
-        const log = careState[user.id] || { text: '未入力', completed: false };
-        return `
-            <div class="card ${log.completed ? 'completed' : ''}" id="card-${user.id}">
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>${user.name}</strong>
-                    <span class="badge">${log.completed ? '完了' : '未'}</span>
-                </div>
-                <div class="btn-group">
-                    <button class="btn-normal" onclick="quickLog(${user.id}, 'meal', 'normal')">昼食(正)</button>
-                    <button class="btn-abnormal" onclick="manualLog(${user.id}, 'meal')">昼食(異)</button>
-                    <button class="btn-normal" onclick="quickLog(${user.id}, 'excretion', 'normal')">排泄(正)</button>
-                </div>
-                <div class="log-preview" id="preview-${user.id}">${log.text}</div>
-            </div>
-        `;
-    }).join('');
-}
-
-// --- Actions (Idempotent & Pure) ---
-function getTime() {
-    return new Date().toLocaleTimeString('ja-JP', {hour: '2-digit', minute:'2-digit'});
-}
-
-window.quickLog = function(userId, category, type) {
-    const text = TEMPLATES[category][type](getTime());
-    saveLog(userId, text);
-};
-
-window.manualLog = function(userId, category) {
-    const note = prompt("異常内容を入力してください（例：むせ込み、拒食、軟便）");
-    if (note) {
-        const text = TEMPLATES[category].abnormal(getTime(), note);
-        saveLog(userId, text);
+    function addWord(word) {
+        const input = document.getElementById('rawInput');
+        input.value += (input.value ? '、' : '') + word;
     }
-};
 
-function saveLog(userId, text) {
-    careState[userId] = { text, completed: true, timestamp: new Date().toISOString() };
-    localStorage.setItem('care_logs', JSON.stringify(careState));
-    
-    // Partial DOM Update for Performance
-    const preview = document.getElementById(`preview-${userId}`);
-    const card = document.getElementById(`card-${userId}`);
-    if (preview) preview.innerText = text;
-    if (card) card.classList.add('completed');
-}
+    // 2. 専門的文章生成ロジック（ささえるラボの原則を適用）
+    function processLog() {
+        const raw = document.getElementById('rawInput').value;
+        const name = document.getElementById('userName').value || "利用者様";
+        const date = document.getElementById('targetDate').value;
+        const scene = document.getElementById('sceneSelect').value;
 
-window.exportAll = function() {
-    const csv = Object.keys(careState).map(id => {
-        const user = USERS.find(u => u.id == id);
-        return `${user.name},"${careState[id].text}"`;
-    }).join('\n');
-    
-    const blob = new Blob([`利用者名,記録内容\n${csv}`], {type: 'text/csv'});
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `介護記録_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-};
+        if (!raw) return alert("メモを入力してください。");
 
-// Initial Load
-render();
+        // ロジック：不適切語の自動変換（リスク管理）
+        let cleanText = raw
+            .replace(/徘徊/g, "落ち着かない様子で歩行")
+            .replace(/暴言/g, "強い口調での訴え")
+            .replace(/拒否/g, "「今はしたくない」との意思表示")
+            .replace(/食べさせる/g, "食事介助を行う");
 
-// Observability: Log interactions
-console.log("System Initialized: 30 slots ready.");
+        // 5W1H構造化
+        let finalLog = `【記録日: ${date}】\n`;
+        finalLog += `${name}の記録：\n`;
+        
+        // 箇条書きを統合し、客観的な文体（常体）に整形
+        const sentences = cleanText.split(/[、。\n]/).filter(s => s.trim());
+        const structuredBody = sentences.map(s => {
+            if (s.includes("：") || s.includes(":")) return s; // 時間指定がある場合
+            return `・${s.trim()}`;
+        }).join('\n');
+
+        finalLog += structuredBody;
+        finalLog += `\n\n[評価/対応] 観察を継続し、特記事項あればリーダー報告。`;
+
+        document.getElementById('outputLog').value = finalLog;
+    }
+
+    function copyLog() {
+        const output = document.getElementById('outputLog');
+        output.select();
+        document.execCommand('copy');
+        alert("クリップボードにコピーしました。そのまま記録システムに貼り付けられます。");
+    }
+
+    function clearAll() {
+        if(confirm("入力をリセットしますか？")) {
+            document.getElementById('rawInput').value = "";
+            document.getElementById('outputLog').value = "";
+        }
+    }
 </script>
 
 </body>
