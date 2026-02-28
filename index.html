@@ -3,194 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareLog Pro v4 - Template Manager</title>
+    <title>CareLog Pro v5 - Auto-Gen Edition</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --success: #059669; }
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: 10px 10px 120px; }
+        :root { --primary: #2563eb; --bg: #f0f4f8; --card: #ffffff; --accent: #7c3aed; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; padding-bottom: 120px; }
+        .header { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        .user-tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 10px; }
+        .tab { flex: 0 0 100px; padding: 10px; border: none; border-radius: 8px; background: #cbd5e1; font-weight: bold; }
+        .tab.active { background: var(--primary); color: white; }
         
-        /* ヘッダー・日時調整 */
-        .header { background: var(--card); padding: 12px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .datetime-group { display: flex; gap: 8px; margin-top: 8px; }
-        .datetime-group input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .gen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .gen-btn { padding: 12px 5px; border: none; border-radius: 8px; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.75rem; font-weight: bold; color: var(--accent); border-bottom: 3px solid var(--accent); cursor: pointer; }
+        .gen-btn:active { transform: translateY(2px); border-bottom: none; }
 
-        /* タブ */
-        .tab-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; }
-        .tab-btn { padding: 10px 15px; border: none; border-radius: 20px; background: #e2e8f0; font-size: 0.85rem; white-space: nowrap; }
-        .tab-btn.active { background: var(--primary); color: white; }
-
-        .patient-card { background: var(--card); border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .editor { background: var(--card); border-radius: 12px; padding: 15px; }
+        textarea { width: 100%; height: 180px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
         
-        /* 収納式テンプレート設計 */
-        .accordion { margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-        .accordion-header { background: #f1f5f9; padding: 10px; font-size: 0.85rem; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
-        .accordion-content { display: none; padding: 10px; background: #fff; max-height: 250px; overflow-y: auto; }
-        .accordion.open .accordion-content { display: block; }
-
-        .sentence-item { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; }
-        .sentence-btn { flex: 1; text-align: left; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; line-height: 1.4; }
-        .del-btn { background: #fee2e2; color: #ef4444; border: none; padding: 10px; border-radius: 6px; }
-
-        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
-        
-        /* テンプレート登録エリア */
-        .add-template { margin-top: 10px; display: flex; gap: 5px; }
-        .add-template input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; }
-
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #e2e8f0; z-index: 1000; }
-        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; font-size: 0.9rem; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; }
+        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="font-size: 0.8rem; font-weight: bold; color: var(--primary);">記録日時調整</div>
-    <div class="datetime-group">
-        <input type="date" id="logDate">
-        <input type="time" id="logTime">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <input type="date" id="logDate" style="border:none; font-weight:bold; color:var(--primary);">
+        <input type="time" id="logTime" style="border:none; font-weight:bold; color:var(--primary);">
     </div>
+    <input type="text" id="pName" placeholder="利用者名" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
 </div>
 
-<div class="tab-container" id="tabContainer"></div>
+<div id="tabBar" class="user-tabs"></div>
 
-<div class="patient-card">
-    <input type="text" id="pName" placeholder="利用者名" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;" oninput="saveData()">
+<div class="gen-grid">
+    <button class="gen-btn" onclick="autoGen('meal')">🍴 食事</button>
+    <button class="gen-btn" onclick="autoGen('bath')">🛁 入浴</button>
+    <button class="gen-btn" onclick="autoGen('water')">💧 水分</button>
+    <button class="gen-btn" onclick="autoGen('med')">💊 服薬</button>
+    <button class="gen-btn" onclick="autoGen('excret')">🚽 排泄</button>
+    <button class="gen-btn" onclick="autoGen('train')">🏋️ 訓練</button>
+    <button class="gen-btn" onclick="autoGen('rec')">🎨 レク</button>
+</div>
 
-    <div class="accordion" id="accMeal">
-        <div class="accordion-header" onclick="toggleAcc('accMeal')">🍴 食事・水分テンプレート <span>▼</span></div>
-        <div class="accordion-content" id="listMeal"></div>
-    </div>
-    <div class="accordion" id="accExcret">
-        <div class="accordion-header" onclick="toggleAcc('accExcret')">🚽 排泄ケアテンプレート <span>▼</span></div>
-        <div class="accordion-content" id="listExcret"></div>
-    </div>
-
-    <div class="add-template">
-        <input type="text" id="newTmpl" placeholder="現在の文章をテンプレート保存">
-        <button onclick="saveTemplate()" style="background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:6px; font-size:0.7rem;">登録</button>
-    </div>
-
-    <textarea id="memoArea" placeholder="ここに記録を入力またはテンプレートを選択" oninput="saveData()"></textarea>
+<div class="editor">
+    <label style="font-size:0.7rem; color:#666;">生成された文章（編集可能）</label>
+    <textarea id="memoArea" oninput="save()"></textarea>
 </div>
 
 <div class="footer">
-    <button class="btn" style="background:var(--primary);" onclick="generatePro()">整形</button>
-    <button class="btn" style="background:var(--success);" onclick="exportCSV()">CSV出力</button>
+    <button class="btn" style="background:var(--primary);" onclick="generatePro()">整形・評価追加</button>
+    <button class="btn" style="background:#059669;" onclick="exportCSV()">一括CSV出力</button>
 </div>
 
 <script>
-    // 初期テンプレート（初回起動用）
-    const DEFAULT_TEMPLATES = {
-        meal: ["12:15 昼食。全量摂取。異常なし。", "「おいしい」と笑顔。自力完食。"],
-        excretion: ["10:20 トイレにて排泄。普通便あり。", "「便が出そう」と訴えあり誘導。"]
-    };
-
-    let state = JSON.parse(localStorage.getItem('care_v4_state')) || {
-        users: [{ name: '', memo: '' }],
-        activeIndex: 0,
-        templates: DEFAULT_TEMPLATES
-    };
-
-    function init() {
-        const now = new Date();
-        document.getElementById('logDate').valueAsDate = now;
-        document.getElementById('logTime').value = now.toTimeString().slice(0,5);
-        renderTabs();
-        renderTemplates();
-        loadUser();
+// 「ささえるラボ」の原則に基づいた文章構成要素辞書
+const DICTIONARY = {
+    meal: {
+        who: ["本人", "ご家族の介助により", "見守りの中で"],
+        what: ["昼食を全量摂取。", "副食を半分ほど摂取。", "「おいしい」と笑顔で完食。"],
+        how: ["むせ込みなくスムーズ。", "箸が止まる場面あったが、促しで再開。", "ご自身で綺麗に召し上がる。"]
+    },
+    bath: {
+        who: ["職員介助にて", "見守りのもと"],
+        what: ["一般浴にて入浴。", "シャワー浴実施。", "清拭にて対応。"],
+        how: ["「さっぱりした」と満足げ。", "背部に2cm程の掻き傷あるが異常なし。", "全身の皮膚状態良好。"]
+    },
+    water: {
+        who: ["本人", "促しにより"],
+        what: ["お茶を150ml飲水。", "スポーツ飲料を200ml摂取。", "白湯を一口飲まれる。"],
+        how: ["喉の渇きを訴えられた。", "「冷たくていい」と喜ばれる。", "水分補給スムーズ。"]
+    },
+    med: {
+        who: ["職員の確認により", "本人"],
+        what: ["朝食後薬を確実に内服。", "点眼薬を実施。", "貼り薬を交換。"],
+        how: ["「お願いします」と協力的。", "飲み忘れなく完了。", "拒否なくスムーズ。"]
+    },
+    excret: {
+        who: ["本人", "トイレ誘導にて"],
+        what: ["普通便あり。", "普通量の排尿あり。", "リハパン交換。"],
+        how: ["皮膚トラブルなし。", "「すっきりした」と表情穏やか。", "ご自身で後始末をされた。"]
+    },
+    train: {
+        who: ["指導員とともに", "平行棒を使用して"],
+        what: ["立位訓練を実施。", "10mの歩行訓練に挑戦。", "足首の可動域訓練。"],
+        how: ["「前より歩けた」と達成感。", "安定した足取り。", "意欲的に取り組まれる。"]
+    },
+    rec: {
+        who: ["他利用者様と", "集団レクにて"],
+        what: ["風船バレーに参加。", "塗り絵に取り組まれる。", "合唱に参加。"],
+        how: ["笑顔で談笑される場面あり。", "活発に動かれていた。", "終始穏やかな表情。"]
     }
+};
 
-    function toggleAcc(id) {
-        document.getElementById(id).classList.toggle('open');
-    }
+let state = JSON.parse(localStorage.getItem('care_v5')) || {
+    users: [{name:'利用者1', memo:''}, {name:'利用者2', memo:''}, {name:'利用者3', memo:''}],
+    idx: 0
+};
 
-    function renderTemplates() {
-        ['meal', 'excret'].forEach(cat => {
-            const container = document.getElementById(cat === 'meal' ? 'listMeal' : 'listExcret');
-            container.innerHTML = (state.templates[cat] || []).map((t, i) => `
-                <div class="sentence-item">
-                    <button class="sentence-btn" onclick="applyTmpl('${t}')">${t}</button>
-                    <button class="del-btn" onclick="delTmpl('${cat}', ${i})">×</button>
-                </div>
-            `).join('');
-        });
-    }
+function init() {
+    const n = new Date();
+    document.getElementById('logDate').valueAsDate = n;
+    document.getElementById('logTime').value = n.toTimeString().slice(0,5);
+    renderTabs();
+    load();
+}
 
-    function saveTemplate() {
-        const text = document.getElementById('newTmpl').value || document.getElementById('memoArea').value;
-        if (!text) return alert("文章を入力してください");
-        // とりあえず「食事」に追加（カテゴリ選択機能は拡張可能）
-        state.templates.meal.push(text);
-        document.getElementById('newTmpl').value = "";
-        saveData();
-        renderTemplates();
-    }
+function renderTabs() {
+    document.getElementById('tabBar').innerHTML = state.users.map((u,i) => 
+        `<button class="tab ${i===state.idx?'active':''}" onclick="setIdx(${i})">${u.name||'新規'}</button>`
+    ).join('') + `<button class="tab" onclick="add()">＋</button>`;
+}
 
-    function delTmpl(cat, i) {
-        state.templates[cat].splice(i, 1);
-        saveData();
-        renderTemplates();
-    }
+// ボタンを押すたびにランダムに組み替えて「違う文章」を作るエンジン
+function autoGen(cat) {
+    const dict = DICTIONARY[cat];
+    const time = document.getElementById('logTime').value;
+    const w = dict.who[Math.floor(Math.random() * dict.who.length)];
+    const what = dict.what[Math.floor(Math.random() * dict.what.length)];
+    const h = dict.how[Math.floor(Math.random() * dict.how.length)];
+    
+    // 原則1: 5W1Hで誰が読んでも状況がわかるように書く
+    const text = `${time}頃、${w}${what}${h}`;
+    
+    const area = document.getElementById('memoArea');
+    area.value += (area.value ? '\n' : '') + text;
+    save();
+}
 
-    function applyTmpl(t) {
-        const memo = document.getElementById('memoArea');
-        const time = document.getElementById('logTime').value;
-        // 時間を自動挿入するスマート補完
-        const textWithTime = t.replace(/^\d{2}:\d{2}/, time); 
-        memo.value += (memo.value ? '\n' : '') + textWithTime;
-        saveData();
-    }
+function generatePro() {
+    let text = document.getElementById('memoArea').value;
+    // 原則2: 客観的「事実」と主観的「解釈」を分けて評価を追加
+    text += "\n【評価】バイタル安定、ご本人の表情も明るく、現状のケアプランを継続する。";
+    document.getElementById('memoArea').value = text;
+    save();
+}
 
-    function renderTabs() {
-        const container = document.getElementById('tabContainer');
-        container.innerHTML = state.users.map((u, i) => `
-            <button class="tab-btn ${i === state.activeIndex ? 'active' : ''}" onclick="switchUser(${i})">
-                ${u.name || '新規'}
-            </button>
-        `).join('') + `<button class="tab-btn" onclick="addUser()">＋追加</button>`;
-    }
-
-    function addUser() {
-        state.users.push({ name: '', memo: '' });
-        state.activeIndex = state.users.length - 1;
-        saveData();
-        renderTabs();
-        loadUser();
-    }
-
-    function switchUser(i) {
-        state.activeIndex = i;
-        loadUser();
-        renderTabs();
-    }
-
-    function loadUser() {
-        const u = state.users[state.activeIndex];
-        document.getElementById('pName').value = u.name;
-        document.getElementById('memoArea').value = u.memo;
-    }
-
-    function saveData() {
-        state.users[state.activeIndex].name = document.getElementById('pName').value;
-        state.users[state.activeIndex].memo = document.getElementById('memoArea').value;
-        localStorage.setItem('care_v4_state', JSON.stringify(state));
-    }
-
-    function exportCSV() {
-        const date = document.getElementById('logDate').value;
-        let csv = "\uFEFF日付,時刻,氏名,内容\n";
-        state.users.forEach(u => {
-            const time = document.getElementById('logTime').value;
-            csv += `${date},${time},${u.name},"${u.memo.replace(/\n/g, ' ')}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `介護記録_${date}.csv`;
-        a.click();
-    }
-
-    init();
+function setIdx(i) { state.idx = i; load(); renderTabs(); }
+function add() { state.users.push({name:'新規', memo:''}); state.idx = state.users.length-1; save(); renderTabs(); load(); }
+function save() { 
+    state.users[state.idx].name = document.getElementById('pName').value;
+    state.users[state.idx].memo = document.getElementById('memoArea').value;
+    localStorage.setItem('care_v5', JSON.stringify(state)); 
+}
+function load() {
+    document.getElementById('pName').value = state.users[state.idx].name;
+    document.getElementById('memoArea').value = state.users[state.idx].memo;
+}
+function exportCSV() {
+    let csv = "\uFEFF日付,氏名,内容\n";
+    state.users.forEach(u => csv += `${document.getElementById('logDate').value},${u.name},"${u.memo.replace(/\n/g,' ')}"\n`);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    a.download = `記録一括_${document.getElementById('logDate').value}.csv`;
+    a.click();
+}
+init();
 </script>
 </body>
 </html>
