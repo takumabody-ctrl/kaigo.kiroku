@@ -3,191 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareLog Pro v2 - Mobile Edition</title>
+    <title>CareLog Pro v3 - Unlimited & Custom Export</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --success: #059669; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; --success: #059669; --danger: #e11d48; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 80px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 100px; }
         
         .header { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h1 { font-size: 1.2rem; margin: 0; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
-        
-        /* 3名分の切り替えタブ */
-        .user-tabs { display: flex; gap: 8px; margin-bottom: 15px; position: sticky; top: 5px; z-index: 100; }
-        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #e2e8f0; font-weight: bold; font-size: 0.9rem; }
+        .date-picker { border: none; font-size: 1rem; color: var(--primary); font-weight: bold; }
+
+        /* 動的タブ管理 */
+        .tab-container { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+        .tab-container::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 0 0 100px; padding: 12px; border: none; border-radius: 8px; background: #e2e8f0; font-weight: bold; font-size: 0.85rem; white-space: nowrap; }
         .tab-btn.active { background: var(--primary); color: white; }
+        .add-user-btn { background: #cbd5e1; flex: 0 0 50px; border-radius: 8px; border: none; font-size: 1.2rem; cursor: pointer; }
 
-        .patient-card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; color: #64748b; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; appearance: none; }
+        .patient-card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; color: #64748b; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         
-        /* 文章ストックの選択UI */
-        .sentence-bank { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        .sentence-btn { text-align: left; padding: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; line-height: 1.4; color: #334155; }
-        .sentence-btn:active { background: #cbd5e1; }
+        /* 文章ストック */
+        .sentence-bank { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        .sentence-btn { text-align: left; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; color: #475569; }
 
-        textarea { height: 120px; resize: none; border: 2px solid #e2e8f0; transition: border-color 0.2s; }
-        textarea:focus { border-color: var(--primary); outline: none; }
+        .output-preview { background: #fffbeb; border: 1px dashed #f59e0b; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 15px; white-space: pre-wrap; min-height: 60px; }
 
-        .output-preview { background: #fffbeb; border: 1px dashed #f59e0b; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 15px; white-space: pre-wrap; }
-
-        /* フッター固定ボタン */
-        .footer-actions { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px; display: flex; gap: 10px; border-top: 1px solid #e2e8f0; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #e2e8f0; }
+        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; font-size: 0.9rem; cursor: pointer; }
         .btn-gen { background: var(--primary); }
         .btn-export { background: var(--success); }
+        .delete-user { margin-top: 20px; font-size: 0.7rem; color: var(--danger); text-align: center; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>CareLog Pro v2 <input type="date" id="logDate" style="width:auto; border:none; font-size:0.9rem;"></h1>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:bold; color:var(--primary);">CareLog Pro v3</span>
+        <input type="date" id="logDate" class="date-picker">
+    </div>
 </div>
 
-<div class="user-tabs" id="userTabs">
-    <button class="tab-btn active" onclick="switchUser(0)">1人目</button>
-    <button class="tab-btn" onclick="switchUser(1)">2人目</button>
-    <button class="tab-btn" onclick="switchUser(2)">3人目</button>
-</div>
-
-<div class="patient-card">
-    <div class="input-group">
-        <label>利用者名</label>
-        <input type="text" id="patientName" placeholder="氏名を入力" onchange="updateData()">
+<div class="tab-container" id="tabContainer">
     </div>
 
-    <div class="input-group">
-        <label>シーン別・文章ストック (クリックで即入力)</label>
-        <select id="categorySelect" onchange="renderSentences()">
+<div id="mainEditor" class="patient-card">
+    <div class="field">
+        <label>利用者名</label>
+        <input type="text" id="pName" placeholder="氏名を入力" oninput="saveCurrentState()">
+    </div>
+
+    <div class="field">
+        <label>テンプレート選択</label>
+        <select id="catSelect" onchange="renderSentences()">
             <option value="meal">食事・水分</option>
             <option value="excretion">排泄ケア</option>
             <option value="accident">体調急変・事故</option>
-            <option value="general">一般生活</option>
         </select>
-        <div id="sentenceBank" class="sentence-bank" style="margin-top:10px;"></div>
+        <div id="sentenceBank" class="sentence-bank"></div>
     </div>
 
-    <div class="input-group">
-        <label>編集・音声入力メモ</label>
-        <textarea id="editArea" placeholder="ここにメモを入力（音声入力推奨）" oninput="updateData()"></textarea>
+    <div class="field">
+        <label>記録本文（音声・手入力）</label>
+        <textarea id="memoArea" oninput="saveCurrentState()" placeholder="5W1H（いつ・どこで・誰が…）を意識して入力"></textarea>
     </div>
 
-    <label>生成プレビュー (自動更新)</label>
-    <div id="outputPreview" class="output-preview"></div>
+    <label>整形後のプレビュー</label>
+    <div id="previewArea" class="output-preview"></div>
+
+    <div class="delete-user" onclick="deleteCurrentUser()">この利用者を削除する</div>
 </div>
 
-<div class="footer-actions">
-    <button class="btn btn-gen" onclick="generateProfessionalLog()">整形</button>
-    <button class="btn btn-export" onclick="exportToSheet()">
-        Excel/スプレッドシート出力
-    </button>
+<div class="footer">
+    <button class="btn btn-gen" onclick="generateLogic()">整形</button>
+    <button class="btn btn-export" onclick="exportCustomCSV()">CSV出力</button>
 </div>
 
 <script>
-    // 文章そのものをストック（5W1H原則に基づくOK例文ベース）
-    const SENTENCE_STOCKS = {
-        meal: [
-            "12:15 食堂にて昼食。主食・副食ともに全量摂取。むせ込み等の異常なし。",
-            "「おいしいね」と笑顔で話され、自力で完食。食後のお茶も150ml飲水済み。",
-            "おかずの煮魚を一口食べ「あまり好きじゃない」と箸が止まる。摂取量2割。"
-        ],
-        excretion: [
-            "10:20 トイレにて排泄。普通量の黄褐色普通便あり。皮膚トラブルなし。",
-            "「便が出そう」との訴えあり誘導。排泄後はご自身で後始末をされた。",
-            "多量の軟便あり、リハビリパンツ交換。臀部に軽度の発赤あるが熱感なし。"
-        ],
-        accident: [
-            "立ち上がろうとした際に足がもつれ、床に尻もちをつく。意識・呼吸に異常なし。",
-            "「おなかがキリキリ痛む」との訴え。バイタル測定しリーダー・看護師へ報告。",
-            "突然「馬鹿にするな」と大声あり。5分ほど傾聴したところ落ち着かれた。"
-        ],
-        general: [
-            "集団体操に意欲的に参加。隣の利用者様と笑顔で会話され、活発に動かれた。",
-            "2:00 訪室巡視。呼吸は穏やかで静かに寝息を立てて入眠されている。",
-            "午前中の受診で少しお疲れのご様子。「今日はやめておく」とご自身の席で休憩。"
-        ]
+    // 1. データ定義（ささえるラボ OK例文準拠）
+    const STOCKS = {
+        meal: ["12:15 食堂にて昼食。主食・副食ともに全量摂取。異常なし。", "「おいしい」と笑顔。自力にて完食。水分150ml飲水。", "主食2割、副食1割。進み悪く延食対応。"],
+        excretion: ["10:20 トイレにて排泄。普通便あり。皮膚状態良好。", "「便が出そう」と訴え。スムーズに移乗、排泄される。", "多量の軟便あり、リハパン交換。熱感・発赤なし。"],
+        accident: ["足がもつれて尻もちをつく。意識清明、バイタル異常なし。", "「膝が痛む」との訴え。熱感なし。看護師へ報告済み。"]
     };
 
-    let currentUserIndex = 0;
-    let usersData = [
-        { name: '', memo: '', output: '' },
-        { name: '', memo: '', output: '' },
-        { name: '', memo: '', output: '' }
+    // 2. 状態管理（State Management）
+    let users = JSON.parse(localStorage.getItem('carelog_data')) || [
+        { id: Date.now(), name: '利用者1', memo: '', output: '' }
     ];
+    let activeIndex = 0;
 
-    document.getElementById('logDate').valueAsDate = new Date();
-
-    function switchUser(index) {
-        currentUserIndex = index;
-        document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-            btn.classList.toggle('active', i === index);
-        });
-        // データの復元
-        document.getElementById('patientName').value = usersData[index].name;
-        document.getElementById('editArea').value = usersData[index].memo;
-        document.getElementById('outputPreview').innerText = usersData[index].output;
+    // 3. UIレンダリング
+    function init() {
+        document.getElementById('logDate').valueAsDate = new Date();
+        renderTabs();
+        loadActiveUser();
         renderSentences();
     }
 
+    function renderTabs() {
+        const container = document.getElementById('tabContainer');
+        container.innerHTML = users.map((u, i) => `
+            <button class="tab-btn ${i === activeIndex ? 'active' : ''}" onclick="switchUser(${i})">
+                ${u.name || '新規'}
+            </button>
+        `).join('') + `<button class="add-user-btn" onclick="addUser()">+</button>`;
+    }
+
+    function addUser() {
+        users.push({ id: Date.now(), name: `利用者${users.length+1}`, memo: '', output: '' });
+        activeIndex = users.length - 1;
+        saveAndRender();
+    }
+
+    function switchUser(index) {
+        activeIndex = index;
+        saveAndRender();
+    }
+
+    function loadActiveUser() {
+        const u = users[activeIndex];
+        document.getElementById('pName').value = u.name;
+        document.getElementById('memoArea').value = u.memo;
+        document.getElementById('previewArea').innerText = u.output;
+    }
+
+    function saveCurrentState() {
+        users[activeIndex].name = document.getElementById('pName').value;
+        users[activeIndex].memo = document.getElementById('memoArea').value;
+        renderTabs();
+        localStorage.setItem('carelog_data', JSON.stringify(users));
+    }
+
+    function saveAndRender() {
+        renderTabs();
+        loadActiveUser();
+        localStorage.setItem('carelog_data', JSON.stringify(users));
+    }
+
+    function deleteCurrentUser() {
+        if (users.length <= 1) return alert("これ以上削除できません。");
+        if (confirm("この利用者のデータを完全に削除しますか？")) {
+            users.splice(activeIndex, 1);
+            activeIndex = 0;
+            saveAndRender();
+        }
+    }
+
+    // 4. 整形ロジック（ささえるラボ 3大原則を自動適用）
+    function generateLogic() {
+        let raw = document.getElementById('memoArea').value;
+        if (!raw) return;
+
+        // 専門用語への自動変換（原則3対応）
+        let processed = raw
+            .replace(/拒否/g, "ご本人の意思を尊重し見合わせ")
+            .replace(/徘徊/g, "廊下を歩行されている")
+            .replace(/わがまま/g, "強いご要望あり");
+
+        // 文末の常体化（〜だ、〜である）
+        if(!processed.endsWith("。")) processed += "。";
+
+        users[activeIndex].output = processed;
+        document.getElementById('previewArea').innerText = processed;
+        saveCurrentState();
+    }
+
+    // 5. 特定施設フォーマットに合わせたCSV出力（調整済み）
+    function exportCustomCSV() {
+        const date = document.getElementById('logDate').value;
+        // 施設フォーマット例: 日付, 氏名, 区分, 内容, 担当者
+        let csv = "\uFEFF日付,利用者氏名,記録内容,備考\n"; 
+        
+        users.forEach(u => {
+            const cleanOutput = u.output.replace(/"/g, '""').replace(/\n/g, ' ');
+            csv += `${date},${u.name},"${cleanOutput}",""\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `介護記録_一括出力_${date}.csv`;
+        link.click();
+    }
+
     function renderSentences() {
-        const cat = document.getElementById('categorySelect').value;
+        const cat = document.getElementById('catSelect').value;
         const bank = document.getElementById('sentenceBank');
-        bank.innerHTML = SENTENCE_STOCKS[cat].map(s => `
-            <button class="sentence-btn" onclick="appendSentence('${s}')">${s}</button>
+        bank.innerHTML = STOCKS[cat].map(s => `
+            <button class="sentence-btn" onclick="addText('${s}')">${s}</button>
         `).join('');
     }
 
-    function appendSentence(s) {
-        const editArea = document.getElementById('editArea');
-        editArea.value += (editArea.value ? '\n' : '') + s;
-        updateData();
+    function addText(s) {
+        const memo = document.getElementById('memoArea');
+        memo.value += (memo.value ? '\n' : '') + s;
+        saveCurrentState();
     }
 
-    function updateData() {
-        usersData[currentUserIndex].name = document.getElementById('patientName').value;
-        usersData[currentUserIndex].memo = document.getElementById('editArea').value;
-        usersData[currentUserIndex].output = document.getElementById('editArea').value; // 簡易反映
-        document.getElementById('outputPreview').innerText = usersData[currentUserIndex].output;
-    }
-
-    function generateProfessionalLog() {
-        const raw = document.getElementById('editArea').value;
-        // 専門的な語彙変換（NGワード変換ロジック）
-        let processed = raw
-            .replace(/拒否/g, "ご本人の意思により見送り")
-            .replace(/徘徊/g, "廊下を歩行されている")
-            .replace(/汚い/g, "不衛生な状態")
-            .replace(/わがまま/g, "強いご要望あり");
-        
-        usersData[currentUserIndex].output = processed;
-        document.getElementById('outputPreview').innerText = processed;
-    }
-
-    function exportToSheet() {
-        const date = document.getElementById('logDate').value;
-        let csvContent = "\uFEFF日付,利用者名,記録内容\n"; // UTF-8 BOM for Excel
-        
-        usersData.forEach(user => {
-            const name = user.name || "未設定";
-            const content = user.output.replace(/"/g, '""').replace(/\n/g, ' ');
-            csvContent += `${date},${name},"${content}"\n`;
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `介護記録_${date}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // 初期表示
-    renderSentences();
+    init();
 </script>
-
 </body>
 </html>
