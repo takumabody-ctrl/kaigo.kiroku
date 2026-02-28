@@ -3,34 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CareLog Pro v5 - Auto-Gen Edition</title>
+    <title>CareLog Pro v7 - Vital & Auto-Gen</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f0f4f8; --card: #ffffff; --accent: #7c3aed; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; padding-bottom: 120px; }
-        .header { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px; }
-        .user-tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 10px; }
-        .tab { flex: 0 0 100px; padding: 10px; border: none; border-radius: 8px; background: #cbd5e1; font-weight: bold; }
-        .tab.active { background: var(--primary); color: white; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --card: #ffffff; --accent: #7c3aed; --vital: #ef4444; }
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: var(--bg); color: #1e293b; margin: 0; padding: 10px 10px 120px; }
         
-        .gen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .gen-btn { padding: 12px 5px; border: none; border-radius: 8px; background: var(--card); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.75rem; font-weight: bold; color: var(--accent); border-bottom: 3px solid var(--accent); cursor: pointer; }
-        .gen-btn:active { transform: translateY(2px); border-bottom: none; }
+        .header { background: var(--card); padding: 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        .config { display: flex; gap: 8px; margin-bottom: 8px; }
+        .config input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; }
 
-        .editor { background: var(--card); border-radius: 12px; padding: 15px; }
-        textarea { width: 100%; height: 180px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
-        
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; }
-        .btn { padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: white; }
+        /* バイタル入力エリア：サッと打てる横並び設計 */
+        .vital-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #fff1f2; padding: 10px; border-radius: 10px; border: 1px solid #fecaca; margin-bottom: 10px; }
+        .vital-field { display: flex; flex-direction: column; }
+        .vital-field label { font-size: 0.7rem; font-weight: bold; color: var(--vital); margin-bottom: 4px; }
+        .vital-field input { padding: 8px; border: 1px solid #fecaca; border-radius: 6px; font-size: 1rem; text-align: center; }
+
+        .user-tabs { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; scrollbar-width: none; }
+        .tab { flex: 0 0 90px; padding: 10px; border: none; border-radius: 20px; background: #e2e8f0; font-size: 0.8rem; font-weight: bold; }
+        .tab.active { background: var(--primary); color: white; }
+
+        .gen-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .gen-btn { padding: 12px 0; border: none; border-radius: 10px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.7rem; font-weight: bold; color: var(--accent); border-bottom: 3px solid var(--accent); }
+
+        .editor { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 140px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; resize: none; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #ddd; z-index: 100; }
+        .btn { padding: 16px; border: none; border-radius: 12px; font-weight: bold; color: white; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-        <input type="date" id="logDate" style="border:none; font-weight:bold; color:var(--primary);">
-        <input type="time" id="logTime" style="border:none; font-weight:bold; color:var(--primary);">
+    <div class="config">
+        <input type="date" id="logDate">
+        <input type="time" id="logTime">
     </div>
-    <input type="text" id="pName" placeholder="利用者名" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+    <input type="text" id="pName" placeholder="利用者名" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" oninput="save()">
+</div>
+
+<div class="vital-grid">
+    <div class="vital-field">
+        <label>体温 (℃)</label>
+        <input type="number" step="0.1" id="vTemp" placeholder="36.5" oninput="save()">
+    </div>
+    <div class="vital-field">
+        <label>血圧 (上/下)</label>
+        <div style="display:flex; align-items:center; gap:2px;">
+            <input type="number" id="vBpHigh" placeholder="120" style="width:50%" oninput="save()">
+            <input type="number" id="vBpLow" placeholder="80" style="width:50%" oninput="save()">
+        </div>
+    </div>
+    <div class="vital-field">
+        <label>脈拍 (回)</label>
+        <input type="number" id="vPulse" placeholder="72" oninput="save()">
+    </div>
 </div>
 
 <div id="tabBar" class="user-tabs"></div>
@@ -38,65 +66,38 @@
 <div class="gen-grid">
     <button class="gen-btn" onclick="autoGen('meal')">🍴 食事</button>
     <button class="gen-btn" onclick="autoGen('bath')">🛁 入浴</button>
+    <button class="gen-btn" onclick="autoGen('excret')">🚽 排泄</button>
+    <button class="gen-btn" onclick="autoGen('night')">🌙 夜勤</button>
     <button class="gen-btn" onclick="autoGen('water')">💧 水分</button>
     <button class="gen-btn" onclick="autoGen('med')">💊 服薬</button>
-    <button class="gen-btn" onclick="autoGen('excret')">🚽 排泄</button>
     <button class="gen-btn" onclick="autoGen('train')">🏋️ 訓練</button>
     <button class="gen-btn" onclick="autoGen('rec')">🎨 レク</button>
 </div>
 
 <div class="editor">
-    <label style="font-size:0.7rem; color:#666;">生成された文章（編集可能）</label>
-    <textarea id="memoArea" oninput="save()"></textarea>
+    <textarea id="memoArea" oninput="save()" placeholder="ボタンを押して文章を自動生成"></textarea>
 </div>
 
 <div class="footer">
-    <button class="btn" style="background:var(--primary);" onclick="generatePro()">整形・評価追加</button>
+    <button class="btn" style="background:var(--primary);" onclick="addVitalToText()">バイタル反映</button>
     <button class="btn" style="background:#059669;" onclick="exportCSV()">一括CSV出力</button>
 </div>
 
 <script>
-// 「ささえるラボ」の原則に基づいた文章構成要素辞書
-const DICTIONARY = {
-    meal: {
-        who: ["本人", "ご家族の介助により", "見守りの中で"],
-        what: ["昼食を全量摂取。", "副食を半分ほど摂取。", "「おいしい」と笑顔で完食。"],
-        how: ["むせ込みなくスムーズ。", "箸が止まる場面あったが、促しで再開。", "ご自身で綺麗に召し上がる。"]
-    },
-    bath: {
-        who: ["職員介助にて", "見守りのもと"],
-        what: ["一般浴にて入浴。", "シャワー浴実施。", "清拭にて対応。"],
-        how: ["「さっぱりした」と満足げ。", "背部に2cm程の掻き傷あるが異常なし。", "全身の皮膚状態良好。"]
-    },
-    water: {
-        who: ["本人", "促しにより"],
-        what: ["お茶を150ml飲水。", "スポーツ飲料を200ml摂取。", "白湯を一口飲まれる。"],
-        how: ["喉の渇きを訴えられた。", "「冷たくていい」と喜ばれる。", "水分補給スムーズ。"]
-    },
-    med: {
-        who: ["職員の確認により", "本人"],
-        what: ["朝食後薬を確実に内服。", "点眼薬を実施。", "貼り薬を交換。"],
-        how: ["「お願いします」と協力的。", "飲み忘れなく完了。", "拒否なくスムーズ。"]
-    },
-    excret: {
-        who: ["本人", "トイレ誘導にて"],
-        what: ["普通便あり。", "普通量の排尿あり。", "リハパン交換。"],
-        how: ["皮膚トラブルなし。", "「すっきりした」と表情穏やか。", "ご自身で後始末をされた。"]
-    },
-    train: {
-        who: ["指導員とともに", "平行棒を使用して"],
-        what: ["立位訓練を実施。", "10mの歩行訓練に挑戦。", "足首の可動域訓練。"],
-        how: ["「前より歩けた」と達成感。", "安定した足取り。", "意欲的に取り組まれる。"]
-    },
-    rec: {
-        who: ["他利用者様と", "集団レクにて"],
-        what: ["風船バレーに参加。", "塗り絵に取り組まれる。", "合唱に参加。"],
-        how: ["笑顔で談笑される場面あり。", "活発に動かれていた。", "終始穏やかな表情。"]
-    }
+// 拡張された1ヶ月対応辞書（バリエーション増量）
+const MASSIVE_DICT = {
+    meal: { where:["食堂にて","居室にて"], who:["ご自身で","職員の見守りで"], what:["全量摂取。","8割摂取。","完食。"], how:["むせなく良好。","「美味しい」と満足げ。","ゆっくり召し上がる。"] },
+    bath: { where:["浴室にて","シャワー室で"], who:["職員介助にて","見守りにて"], what:["入浴。","清拭実施。"], how:["「さっぱりした」と笑顔。","皮膚状態良好。"] },
+    excret: { where:["トイレにて","居室にて"], who:["誘導により","「出そう」と訴え"], what:["普通便あり。","排尿あり。"], how:["腹部膨満なし。","後始末もスムーズ。"] },
+    night: { where:["巡視にて","深夜巡回時"], who:["寝息を立てて","静かに"], what:["入眠中。","休まれている。"], how:["特変なし。","朝まで安定。"] },
+    water: { where:["食堂で","休憩時"], who:["促しにより","本人の希望で"], what:["お茶150ml飲水。","水分補給。"], how:["嚥下良好。","喉が渇いたとのこと。"] },
+    med: { where:["食後に","居室で"], who:["職員確認で","促しで"], what:["内服完了。","点眼実施。"], how:["確実に服用。","「はい」と協力的。"] },
+    train: { where:["廊下にて","機能訓練室で"], who:["指導員と","歩行器で"], what:["歩行訓練。","立ち上がり練習。"], how:["足取り安定。","意欲的。"] },
+    rec: { where:["デイルームで","談話室で"], who:["他の方と","職員と"], what:["レク参加。","塗り絵。"], how:["笑顔あり。","集中されている。"] }
 };
 
-let state = JSON.parse(localStorage.getItem('care_v5')) || {
-    users: [{name:'利用者1', memo:''}, {name:'利用者2', memo:''}, {name:'利用者3', memo:''}],
+let state = JSON.parse(localStorage.getItem('care_v7')) || {
+    users: Array.from({length:3}, (_,i)=>({name:`利用者${i+1}`, memo:'', vital:{t:'', bH:'', bL:'', p:''}})),
     idx: 0
 };
 
@@ -108,53 +109,64 @@ function init() {
     load();
 }
 
+function autoGen(cat) {
+    const d = MASSIVE_DICT[cat];
+    const time = document.getElementById('logTime').value;
+    const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const sentence = `${time}、${r(d.where)}${r(d.who)}${r(d.what)}${r(d.how)}`;
+    document.getElementById('memoArea').value = sentence;
+    save();
+}
+
+function addVitalToText() {
+    const v = state.users[state.idx].vital;
+    if(!v.t && !v.bH) return alert("数値を入力してください");
+    const vitalText = `【バイタル】体温:${v.t}℃ 血圧:${v.bH}/${v.bL} 脈拍:${v.p}`;
+    document.getElementById('memoArea').value += (document.getElementById('memoArea').value ? '\n' : '') + vitalText;
+    save();
+}
+
 function renderTabs() {
     document.getElementById('tabBar').innerHTML = state.users.map((u,i) => 
         `<button class="tab ${i===state.idx?'active':''}" onclick="setIdx(${i})">${u.name||'新規'}</button>`
     ).join('') + `<button class="tab" onclick="add()">＋</button>`;
 }
 
-// ボタンを押すたびにランダムに組み替えて「違う文章」を作るエンジン
-function autoGen(cat) {
-    const dict = DICTIONARY[cat];
-    const time = document.getElementById('logTime').value;
-    const w = dict.who[Math.floor(Math.random() * dict.who.length)];
-    const what = dict.what[Math.floor(Math.random() * dict.what.length)];
-    const h = dict.how[Math.floor(Math.random() * dict.how.length)];
-    
-    // 原則1: 5W1Hで誰が読んでも状況がわかるように書く
-    const text = `${time}頃、${w}${what}${h}`;
-    
-    const area = document.getElementById('memoArea');
-    area.value += (area.value ? '\n' : '') + text;
-    save();
-}
-
-function generatePro() {
-    let text = document.getElementById('memoArea').value;
-    // 原則2: 客観的「事実」と主観的「解釈」を分けて評価を追加
-    text += "\n【評価】バイタル安定、ご本人の表情も明るく、現状のケアプランを継続する。";
-    document.getElementById('memoArea').value = text;
-    save();
-}
-
 function setIdx(i) { state.idx = i; load(); renderTabs(); }
-function add() { state.users.push({name:'新規', memo:''}); state.idx = state.users.length-1; save(); renderTabs(); load(); }
+function add() { state.users.push({name:'新規', memo:'', vital:{t:'', bH:'', bL:'', p:''}}); state.idx = state.users.length-1; save(); renderTabs(); load(); }
+
 function save() { 
-    state.users[state.idx].name = document.getElementById('pName').value;
-    state.users[state.idx].memo = document.getElementById('memoArea').value;
-    localStorage.setItem('care_v5', JSON.stringify(state)); 
+    const u = state.users[state.idx];
+    u.name = document.getElementById('pName').value;
+    u.memo = document.getElementById('memoArea').value;
+    u.vital = {
+        t: document.getElementById('vTemp').value,
+        bH: document.getElementById('vBpHigh').value,
+        bL: document.getElementById('vBpLow').value,
+        p: document.getElementById('vPulse').value
+    };
+    localStorage.setItem('care_v7', JSON.stringify(state)); 
 }
+
 function load() {
-    document.getElementById('pName').value = state.users[state.idx].name;
-    document.getElementById('memoArea').value = state.users[state.idx].memo;
+    const u = state.users[state.idx];
+    document.getElementById('pName').value = u.name;
+    document.getElementById('memoArea').value = u.memo;
+    document.getElementById('vTemp').value = u.vital.t;
+    document.getElementById('vBpHigh').value = u.vital.bH;
+    document.getElementById('vBpLow').value = u.vital.bL;
+    document.getElementById('vPulse').value = u.vital.p;
 }
+
 function exportCSV() {
-    let csv = "\uFEFF日付,氏名,内容\n";
-    state.users.forEach(u => csv += `${document.getElementById('logDate').value},${u.name},"${u.memo.replace(/\n/g,' ')}"\n`);
+    let csv = "\uFEFF日付,氏名,体温,血圧上,血圧下,脈拍,記録内容\n";
+    state.users.forEach(u => {
+        const v = u.vital;
+        csv += `${document.getElementById('logDate').value},${u.name},${v.t},${v.bH},${v.bL},${v.p},"${u.memo.replace(/\n/g,' ')}"\n`;
+    });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-    a.download = `記録一括_${document.getElementById('logDate').value}.csv`;
+    a.download = `介護記録バイタル込_${document.getElementById('logDate').value}.csv`;
     a.click();
 }
 init();
